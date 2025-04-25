@@ -1,8 +1,7 @@
-import { openai } from "@ai-sdk/openai";
-import { google } from "@ai-sdk/google";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { experimental_createMCPClient, streamText, tool } from "ai";
+import { FIGMA_SYSTEM_PROMPT } from "./system-prompt";
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
@@ -17,7 +16,7 @@ export async function POST(req: Request) {
       name: "figma-mcp",
       transport: {
         type: "sse",
-        url: "http://localhost:3000/sse",
+        url: "http://localhost:3001/sse",
       },
     });
 
@@ -25,20 +24,7 @@ export async function POST(req: Request) {
 
     const result = streamText({
       model: anthropic("claude-3-7-sonnet-20250219"),
-      system: `You are an expert at converting Figma designs into HTML and CSS. The way to do it is to access the figma tool.
-      1) Any messages related to figma should go for the figma pat tool first.
-      2) Using the PAT, you can get information about the file or a give node.
-      3) When you ask for a file or node, you will get a response with a YAML string.
-      4) The YAML string is a list of nodes with information about the node and its children. 
-      5) A node can be a frame, image, text, stroke, effect, layout. 
-      7) Use the YAML to create the HTML structure and CSS styles.
-      8) Most importantly, you can request for the thumbnail image of each node along the tree. 
-      9) Its better to use thumbnail image if a node has too many vector/svg nodes. 
-      10) If a node is an image node, use the image url.
-      11) Using the assets and YAML, create the most accurate representation of the file or node in HTML and CSS.
-      12) Sometimes if you get a frame, and it has icons that would be better off to be taken as svg, dont consider it to be a thumbnail, render out the individual elements as part of the html.
-      13) Dont recreate svg's from scratch, always use the svg tags that you can get from the assets. 
-      `,
+      system: FIGMA_SYSTEM_PROMPT,
       messages,
       toolCallStreaming: true,
       maxSteps: 5,
@@ -51,7 +37,15 @@ export async function POST(req: Request) {
           description: "get the figma pat",
           parameters: z.object({}),
           execute: async () => {
-            // put the figma pat here
+            if (process.env.FIGMA_PAT) {
+              return {
+                content: [{ type: "text", text: process.env.FIGMA_PAT }],
+              };
+            }
+            return {
+              isError: true,
+              content: [{ type: "text", text: "No PAT found" }],
+            };
           },
         }),
         getWeatherInformation: tool({

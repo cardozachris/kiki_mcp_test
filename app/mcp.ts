@@ -111,31 +111,39 @@ export const mcpHandler = initializeMcpApiHandler(
           ),
       },
       async ({ fileKey, nodeId, depth, figmaPAT }) => {
-        const figmaService = new FigmaService(figmaPAT);
-        let file: FigmaFile;
-        if (nodeId) {
-          file = await figmaService.getNode(fileKey, nodeId, depth);
-        } else {
-          file = await figmaService.getFile(fileKey, depth);
+        try {
+          const figmaService = new FigmaService(figmaPAT);
+          let file: FigmaFile;
+          if (nodeId) {
+            file = await figmaService.getNode(fileKey, nodeId, depth);
+          } else {
+            file = await figmaService.getFile(fileKey, depth);
+          }
+
+          const { nodes, globalVars, ...metadata } = file;
+
+          const result = {
+            metadata,
+            nodes,
+            globalVars,
+          };
+
+          const yamlResult = yaml.dump(result);
+          return {
+            content: [
+              {
+                type: "text",
+                text: yamlResult,
+              },
+            ],
+          };
+        } catch (error) {
+          console.error(error);
+          return {
+            isError: true,
+            content: [{ type: "text", text: "Error fetching data" }],
+          };
         }
-
-        const { nodes, globalVars, ...metadata } = file;
-
-        const result = {
-          metadata,
-          nodes,
-          globalVars,
-        };
-
-        const yamlResult = yaml.dump(result);
-        return {
-          content: [
-            {
-              type: "text",
-              text: yamlResult,
-            },
-          ],
-        };
       }
     );
   },

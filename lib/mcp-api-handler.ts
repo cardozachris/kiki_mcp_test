@@ -89,9 +89,16 @@ export function initializeMcpApiHandler(
   return async function mcpApiHandler(req: Request, res: ServerResponse) {
     await redisPromise; // Wait for Redis to connect
     const url = new URL(req.url || "", "https://example.com");
+    const secret = req.headers.get("mcp-secret");
+
+    if (secret !== process.env.MCP_SECRET) {
+      res.statusCode = 401;
+      res.end("Unauthorized");
+      return;
+    }
+
     const figmaPAT = req.headers.get("figma-pat");
 
-    console.log("Got new request", url.pathname, figmaPAT);
     if (url.pathname === "/sse") {
       console.log("Got new SSE connection");
 
@@ -101,9 +108,6 @@ export function initializeMcpApiHandler(
         {
           name: "figma-mcp",
           version: "0.1.0",
-          context: {
-            figmaPAT,
-          },
         },
         serverOptions
       );
