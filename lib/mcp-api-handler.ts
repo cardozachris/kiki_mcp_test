@@ -5,7 +5,7 @@ import { createClient } from "redis";
 import { Socket } from "net";
 import { Readable } from "stream";
 import { ServerOptions } from "@modelcontextprotocol/sdk/server/index.js";
-import { maxDuration } from "@/app/sse/route";
+import { maxDuration } from "@/app/api/sse/route";
 
 interface SerializedRequest {
   requestId: string;
