@@ -5,7 +5,7 @@ import { createClient } from "redis";
 import { Socket } from "net";
 import { Readable } from "stream";
 import { ServerOptions } from "@modelcontextprotocol/sdk/server/index.js";
-import { maxDuration } from "@/app/api/sse/route";
+import { maxDuration } from "@/app/sse/route";
 
 interface SerializedRequest {
   requestId: string;
@@ -91,7 +91,7 @@ export function initializeMcpApiHandler(
     const url = new URL(req.url || "", "https://example.com");
     const secret = req.headers.get("mcp-secret");
 
-    if (secret !== process.env.MCP_SECRET) {
+    if (secret !== process.env.MCP_API_KEY) {
       res.statusCode = 401;
       res.end("Unauthorized");
       return;

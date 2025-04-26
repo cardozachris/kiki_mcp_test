@@ -9,18 +9,20 @@ export async function POST(req: Request) {
   const headers: Record<string, string> = Object.fromEntries(
     req.headers.entries()
   );
+  // Get the origin from the request headers
+  const origin = headers["origin"] || headers["host"];
+  const sseUrl = `${origin}/sse`;
+  console.log(sseUrl);
 
   try {
-    // Get the origin from the request headers
-    const origin = headers["origin"] || headers["host"];
-    const sseUrl = `${origin}/api/sse`;
-
-    // Alternatively, you can connect to a Server-Sent Events (SSE) MCP server:
     const sseClient = await experimental_createMCPClient({
       name: "figma-mcp",
       transport: {
         type: "sse",
         url: sseUrl,
+        headers: {
+          "mcp-secret": process.env.MCP_API_KEY || "",
+        },
       },
     });
 
