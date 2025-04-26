@@ -85,6 +85,69 @@ export const mcpHandler = initializeMcpApiHandler(
     );
 
     server.tool(
+      "get_figma_data_oauth",
+      {
+        fileKey: z
+          .string()
+          .describe(
+            "The key of the Figma file to fetch, often found in a provided URL like figma.com/(file|design)/<fileKey>/..."
+          ),
+        nodeId: z
+          .string()
+          .optional()
+          .describe(
+            "The ID of the node to fetch, often found as URL parameter node-id=<nodeId>, always use if provided"
+          ),
+        depth: z
+          .number()
+          .optional()
+          .describe(
+            "How many levels deep to traverse the node tree, only use if explicitly requested by the user"
+          ),
+        oAuthToken: z
+          .string()
+          .describe(
+            "The OAuth token for Figma, used to fetch data from the file"
+          ),
+      },
+      async ({ fileKey, nodeId, depth, oAuthToken }) => {
+        try {
+          const figmaService = new FigmaService(oAuthToken, true);
+          let file: FigmaFile;
+          if (nodeId) {
+            file = await figmaService.getNode(fileKey, nodeId, depth);
+          } else {
+            file = await figmaService.getFile(fileKey, depth);
+          }
+
+          const { nodes, globalVars, ...metadata } = file;
+
+          const result = {
+            metadata,
+            nodes,
+            globalVars,
+          };
+
+          const yamlResult = yaml.dump(result);
+          return {
+            content: [
+              {
+                type: "text",
+                text: yamlResult,
+              },
+            ],
+          };
+        } catch (error) {
+          console.error(error);
+          return {
+            isError: true,
+            content: [{ type: "text", text: "Error fetching data" }],
+          };
+        }
+      }
+    );
+
+    server.tool(
       "get_figma_data",
       {
         fileKey: z
@@ -154,7 +217,11 @@ export const mcpHandler = initializeMcpApiHandler(
           description: "Echo a message",
         },
         get_figma_data: {
-          description: "Get data from a Figma file",
+          description:
+            "Get data from a Figma file using a personal access token",
+        },
+        get_figma_data_oauth: {
+          description: "Get data from a Figma file using an OAuth token",
         },
         get_figma_images_links: {
           description: "Get links to images from a Figma file",

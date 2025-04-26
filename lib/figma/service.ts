@@ -33,9 +33,11 @@ type FetchImageFillParams = Omit<FetchImageParams, "fileType"> & {
 export class FigmaService {
   private readonly apiKey: string;
   private readonly baseUrl = "https://api.figma.com/v1";
+  private readonly isOAuthToken: boolean;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, isOAuthToken: boolean = false) {
     this.apiKey = apiKey;
+    this.isOAuthToken = isOAuthToken;
   }
 
   private async request<T>(endpoint: string): Promise<T> {
@@ -45,10 +47,12 @@ export class FigmaService {
       );
     }
     try {
+      const headers: Record<string, string> = this.isOAuthToken
+        ? { Authorization: `Bearer ${this.apiKey}` }
+        : { "X-Figma-Token": this.apiKey };
+
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
-        headers: {
-          "X-Figma-Token": this.apiKey,
-        },
+        headers,
       });
 
       if (!response.ok) {
