@@ -38,7 +38,7 @@ export const mcpHandler = initializeMcpApiHandler(
       },
       async ({ fileKey, nodes, figmaPAT }) => {
         try {
-          const figmaService = new FigmaService(figmaPAT);
+          const figmaService = new FigmaService(figmaPAT, true);
           const imageFills = nodes.filter(({ imageRef }) => !!imageRef) as {
             nodeId: string;
             imageRef: string;
