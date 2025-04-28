@@ -1,7 +1,7 @@
 import { mcpHandler } from "@/app/mcp";
 import { createServerResponseAdapter } from "@/lib/server-response-adapter";
 
-export const maxDuration = 60;
+export const maxDuration = 500;
 
 export async function POST(req: Request) {
   console.log("Message route called");
